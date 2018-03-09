@@ -41,9 +41,10 @@ function check_input_params() {
 function commit_bbl_state_dir {
   local root_dir
   root_dir="${1}"
+  local commit_message
   commit_message="${2}"
 
-  pushd "${root_dir}/env-repo/${BBL_STATE_DIR}"
+  pushd "${root_dir}/bbl-state/${BBL_STATE_DIR}"
     if [[ -n $(git status --porcelain) ]]; then
       set_git_config
       git add --all .
@@ -53,7 +54,7 @@ function commit_bbl_state_dir {
 
   pushd "${root_dir}"
     shopt -s dotglob
-    cp -R env-repo/* updated-env-repo/
+    cp -R "bbl-state/." "updated-bbl-state/"
   popd
 }
 
@@ -85,22 +86,10 @@ function commit_vars_store() {
 
 function setup_bosh_env_vars() {
   set +ux
-  pushd env-repo/"${BBL_STATE_DIR}"
+  pushd "bbl-state/${BBL_STATE_DIR}"
     eval "$(bbl print-env)"
   popd
   set -ux
-}
-
-function close_bbl_ssh_connection() {
-  # Kill all ssh connections on exit.
-  # This is needed so that tasks using bbl print-env in a credhub environment
-  # don't hang after the script is finished.
-  pkill ssh || true
-}
-
-function close_bbl_ssh_connection_and_commit_vars_store() {
-  close_bbl_ssh_connection
-  commit_vars_store
 }
 
 function bosh_interpolate() {
@@ -116,7 +105,11 @@ function bosh_interpolate() {
   bosh_manifest="cf-deployment/${MANIFEST_FILE}"
 
   local arguments
-  arguments="--vars-store vars-store/${VARS_STORE_FILE} -v system_domain=${SYSTEM_DOMAIN}"
+  if ${USE_VARS_STORE}; then
+    arguments="--vars-store vars-store/${VARS_STORE_FILE} -v system_domain=${SYSTEM_DOMAIN}"
+  else
+    arguments="-v system_domain=${SYSTEM_DOMAIN}"
+  fi
 
   for op in ${OPS_FILES}
   do
@@ -146,10 +139,16 @@ EOF
 
   # We are intentionally passing a series of arguments here:
   # shellcheck disable=SC2086
+  local bosh_arguments
+  bosh_arguments=""
+  if ${USE_VARS_STORE}; then
+    bosh_arguments="--var-errs"
+  fi
+
   bosh \
     -n \
     interpolate ${arguments} \
-    --var-errs \
+    ${bosh_arguments} \
     "${bosh_manifest}" \
     > "${INTERPOLATED_MANIFEST}"
 }

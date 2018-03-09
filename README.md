@@ -1,6 +1,6 @@
 # cf-deployment-concourse-tasks
 This repo contains concourse tasks for use with [cf-deployment][cf-deployment-repo].
-If you are trying to deploy to GCP, you may wish to check the [GCP Deployment Guide][gcp-deployment-guide].
+If you are trying to deploy to IAAS, you may wish to check the [Deployment Guide][deployment-guide].
 Each task is in its own directory.
 A task will generally be composed of a task.yml to be referenced in pipelines,
 a supporting task file, and a Dockerfile.
@@ -76,7 +76,7 @@ This task requires
 a certificate and key
 (unless you are `bbl`ing up a bosh-lite environment)
 which can be generated using
-the commands specified [here][gcp-deployment-guide-on-certificates].
+the commands specified [here][deployment-guide-on-certificates].
 
 ### [bosh-cleanup][bosh-cleanup-task-yaml]
 This performs a BOSH cleanup
@@ -157,8 +157,8 @@ a vars-store.
 [cf-deployment-slack-channel]: https://cloudfoundry.slack.com/messages/cf-deployment/
 [collect-ops-files]: https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/collect-ops-files/task.yml
 [deploy-with-created-lines]: https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-deploy-with-created-release/task#L49-L55
-[gcp-deployment-guide]: https://github.com/cloudfoundry/cf-deployment/blob/develop/gcp-deployment-guide.md
-[gcp-deployment-guide-on-certificates]: https://github.com/cloudfoundry/cf-deployment/blob/develop/gcp-deployment-guide.md#on-certificates
+[deployment-guide]: https://github.com/cloudfoundry/cf-deployment/blob/develop/deployment-guide.md
+[deployment-guide-on-certificates]: https://github.com/cloudfoundry/cf-deployment/blob/develop/deployment-guide.md#on-certificates
 [issues-page]: https://github.com/cloudfoundry/cf-deployment-concourse-tasks/issues
 [runtime-ci-build-docker-images]: https://runtime.ci.cf-app.com/teams/main/pipelines/build-docker-images?groups=cf-deployment-concourse-tasks
 [set-feature-flags-task-yaml]: https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/set-feature-flags/task.yml

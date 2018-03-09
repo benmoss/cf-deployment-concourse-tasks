@@ -5,22 +5,20 @@ image_resource:
   type: docker-image
   source:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-    tag: v4.4.0
+    tag: v5.0.0
 
 inputs:
 - name: cf-deployment-concourse-tasks  # - This repo
-- name: env-repo  # - The env repo containing the Director's bbl state dir
-- name: ops-files
-# - A directory containing ops files
-#   to be specifed with the `OPS_FILES` param
-# - If no ops files are necessary in your case,
+- name: bbl-state  # - The env repo containing the Director's bbl state dir
+- name: bbl-config  # - The repo containing bbl plan patches
+# - If no plan patches are necessary in your case,
 #   we suggest you use `input_mapping`
-#   to map your `env-repo` resource to `ops-files`
+#   to map your `bbl-state` resource to `bbl-config`
 #   in order to satisfy this required input.
 
 outputs:
-- name: updated-env-repo
-# - The env-repo resource, with changes git committed,
+- name: updated-bbl-state
+# - The bbl-state resource, with changes git committed,
 # - ready to be `put` to a git resource.
 # - This output _must_ be persisted for these tasks to function properly
 
@@ -38,14 +36,20 @@ params:
   # - Required for GCP
   BBL_GCP_SERVICE_ACCOUNT_KEY:
   # - Key content or path to the file containing credentials downloaded from GCP
-  # - Path is relative to the `env-repo` input
+  # - Path is relative to the `bbl-state` input
   BBL_GCP_REGION:
 
   BBL_STATE_DIR: bbl-state
   # - Path to the directory containing the `bbl-state.json` file
-  # - The path is relative to the `env-repo` input
-  # - If blank or '.', uses `env-repo` input as the location for bbl state
+  # - The path is relative to the `bbl-state` input
+  # - If blank or '.', uses `bbl-state` input as the location for bbl state
   # - If the specified path does not exist, it will be created
+
+  BBL_CONFIG_DIR:
+  # - Optional
+  # - Path to the directory containing bbl plan patches
+  # - The path is relative to the `bbl-config` input
+  # - If left empty, no customizations (i.e. ops-files, terraform templates, etc.) will be applied during `bbl up`
 
   BBL_IAAS:
   # - Required
@@ -53,7 +57,7 @@ params:
   # - Must be either `aws` or `gcp`
 
   BBL_LB_CERT:
-  # - Required if `IS_BOSH_LITE` is false
+  # - Required if `SKIP_LB_CREATION` is false
   # - PEM encoded certificate to be associated with the load balancer
   #   for SSL termination
   # - Can be either the certificate content or a path to the certificate
@@ -67,25 +71,20 @@ params:
   # - If a path is provided, path is relative to the BBL_STATE_DIR
 
   BBL_LB_KEY:
-  # - Required if `IS_BOSH_LITE` is false
+  # - Required if `SKIP_LB_CREATION` is false
   # - PEM-encoded private key to be used for TLS termination on the load
   #   balancer.
   # - Can be either the key content or a path to the key
   # - If a path is provided, path is relative to the BBL_STATE_DIR
 
   LB_DOMAIN:
-  # - Required if `IS_BOSH_LITE` is false
+  # - Required if `SKIP_LB_CREATION` is false
   # - The domain which bbl will register
 
   BBL_ENV_NAME:
   # - Optional
   # - A label to apply to the bbl environment
   # - Label will appear in the IaaS metadata/interface
-
-  BBL_EXTRA_FLAGS:
-  # - Optional
-  # - Extra flags to pass into bbl up
-  # - Can be used for experimental features such as `--credhub`
 
   GIT_COMMIT_EMAIL:
   GIT_COMMIT_USERNAME:
@@ -95,15 +94,7 @@ params:
   # - If you leave them blank, they are set to
   #   'CI Bot' and 'cf-release-integration@pivotal.io'
 
-  OPS_FILES:
+  SKIP_LB_CREATION: false
   # - Optional
-  # - List of operations files to be applied to the manifest
-  # - Quoted and space-separated
-  # - Ops will be applied in the order they're listed
-  # - Paths are relative to root of the `ops-files` input
-
-  IS_BOSH_LITE: false
-  # - Optional
-  # - Set to `true` to deploy bosh in a lite configuration
-  # - NOTE - Requires BBL_IAAS=`gcp` -
-  #   AWS is not currently supported.
+  # - Set to `true` to skip load balancer creation,
+  # - for example, a BOSH Lite environment

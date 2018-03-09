@@ -2,10 +2,14 @@ FROM ubuntu:trusty
 
 ENV GO_VERSION 1.9
 ENV JQ_VERSION 1.5
-ENV CF_CLI_VERSION 6.23.1
 
 ENV JQ_CHECKSUM d8e36831c3c94bb58be34dd544f44a6c6cb88568
-ENV CF_CLI_CHECKSUM b25260f46bf24d1e2586c1f4d67db3fdd89f0144
+
+ENV cf_cli_version 6.34.1
+ENV bosh_cli_version 2.0.48
+ENV bbl_version 6.4.1
+ENV terraform_version 0.11.3
+ENV credhub_cli_version 1.6.0
 
 RUN \
   apt-get update && \
@@ -42,7 +46,6 @@ RUN \
   chmod +x jq
 
 # bosh-cli
-ARG bosh_cli_version
 RUN \
   wget https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-${bosh_cli_version}-linux-amd64 --output-document="/usr/bin/bosh" && \
   chmod +x /usr/bin/bosh
@@ -50,13 +53,17 @@ RUN \
 # cf-cli
 RUN \
   cd /tmp && \
-  wget -q -O cf.deb "https://cli.run.pivotal.io/stable?release=debian64&version=${CF_CLI_VERSION}&source=github-rel" && \
-  echo "${CF_CLI_CHECKSUM} cf.deb" | sha1sum -c - && \
+  wget -q -O cf.deb "https://cli.run.pivotal.io/stable?release=debian64&version=${cf_cli_version}&source=github-rel" && \
   dpkg -i cf.deb && \
   rm cf.deb
 
+# credhub-cli
+RUN \
+  wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/${credhub_cli_version}/credhub-linux-${credhub_cli_version}.tgz -P /tmp && \
+  tar xzvf /tmp/credhub-linux-${credhub_cli_version}.tgz -C /usr/local/bin && \
+  chmod +x /usr/local/bin/credhub
+
 # bbl and dependencies
-ARG bbl_version
 RUN \
   wget https://github.com/cloudfoundry/bosh-bootloader/releases/download/v${bbl_version}/bbl-v${bbl_version}_linux_x86-64 -P /tmp && \
   mv /tmp/bbl-* /usr/local/bin/bbl && \
@@ -69,7 +76,6 @@ RUN \
   tar xvf  /tmp/v${bbl_version}.tar.gz --strip-components=1 -C /var/repos/bosh-bootloader && \
   rm -rf /tmp/*
 
-ARG terraform_version
 RUN \
   wget "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip" -P /tmp && \
   cd /tmp && \
